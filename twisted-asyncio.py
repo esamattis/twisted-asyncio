@@ -17,9 +17,9 @@ class RandomMessageSocket():
 
     # Start calling callback with random messages
     def start_random_message_socket(self, callback):
-        self.send_random_message(callback)
+        reactor.callLater(0.1, self.loop, callback)
 
-    def send_random_message(self, callback):
+    def loop(self, callback):
         messages = list(range(1, 20)) # number from 1-20
         random.shuffle(messages)
         random_message = messages[0]
@@ -27,7 +27,7 @@ class RandomMessageSocket():
         callback(random_message)
 
         # Recursively loop random message sending
-        reactor.callLater(0.1, self.send_random_message, callback)
+        reactor.callLater(0.1, self.loop, callback)
 
 
 class Handler():
@@ -60,7 +60,7 @@ class Handler():
     async def main(self):
         print("Print first message")
         msg = await self.read_message()
-        print("first_message {}".format(msg))
+        print("first message {}".format(msg))
 
         print("Sleeping")
         await asyncio.sleep(2)
