@@ -36,15 +36,20 @@ class Handler():
 
     def process_message(self, message):
         print(">>> Just logging messages message: {}".format(message))
+
         if self.future:
+            # Resolve the read_message() future if we have one
             self.future.set_result(message)
+            # And clear it once it's resolved
             self.future = None
 
+    # Reads the next message from the stream
     async def read_message(self):
         loop = asyncio.get_running_loop()
         self.future = loop.create_future()
         return await self.future
 
+    # Waits for a spesific message and ignores others
     async def wait_for(self, expected_message):
         while True:
             msg = await self.read_message()
