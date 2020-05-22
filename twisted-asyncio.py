@@ -30,52 +30,35 @@ class RandomMessageSocket():
         reactor.callLater(0.1, self.send_random_message, callback)
 
 
-class MessageExpectation():
-
-    def __init__(self, expected_message):
-        self.expected_message = expected_message
-        loop = asyncio.get_running_loop()
-        self.future = loop.create_future()
-
-
-    def try_fulfill(self, message):
-        if self.future.done():
-            # already received this message
-            return
-
-        if self.expected_message != message:
-            # Some other message, not interested
-            return
-
-        self.future.set_result(message)
-
-    # Wait until this expectation is fulfilled
-    async def wait(self):
-        await self.future
-
-
 class Handler():
     def __init__(self):
-        self.expectations = []
+        self.future = None
 
     def process_message(self, message):
         print(">>> Just logging messages message: {}".format(message))
+        if self.future:
+            self.future.set_result(message)
+            self.future = None
 
-        for expectation in self.expectations:
-            expectation.try_fulfill(message)
-
+    async def read_message(self):
+        loop = asyncio.get_running_loop()
+        self.future = loop.create_future()
+        return await self.future
 
     async def wait_for(self, expected_message):
-        # Create expectation that can be fulfilled by the twisted process_message callback
-        expectation = MessageExpectation(expected_message)
-        self.expectations.append(expectation)
-        return await expectation.wait()
-
+        while True:
+            msg = await self.read_message()
+            if msg == expected_message:
+                return msg
+            print(">>> unrelated message: {} but wanted: {}".format(msg, expected_message))
 
     async def main(self):
-        print("Sleeping")
-        await asyncio.sleep(5)
+        print("Print first message")
+        msg = await self.read_message()
+        print("first_message {}".format(msg))
 
+        print("Sleeping")
+        await asyncio.sleep(2)
 
         print("Waiting for 4")
         await self.wait_for(4)
