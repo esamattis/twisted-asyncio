@@ -73,6 +73,9 @@ class Handler():
 
 
     async def main(self):
+        print("Sleeping")
+        await asyncio.sleep(5)
+
 
         print("Waiting for 4")
         await self.wait_for(4)
