@@ -30,9 +30,21 @@ class RandomMessageSocket():
         reactor.callLater(0.1, self.loop, callback)
 
 
+
+async def get_price():
+    pass
+
+
+
+
+
+
+
+
 class Handler():
     def __init__(self):
         self.future = None
+        self.price = 0
 
     def process_message(self, message):
         print(">>> Just logging messages message: {}".format(message))
@@ -57,24 +69,28 @@ class Handler():
                 return msg
             print(">>> unrelated message: {} but wanted: {}".format(msg, expected_message))
 
+    async def keep_price_synced(self):
+        while True:
+            self.price = await self.read_message()
+
+
     async def main(self):
-        print("Print first message")
-        msg = await self.read_message()
-        print("first message {}".format(msg))
 
-        print("Sleeping")
-        await asyncio.sleep(2)
+        self.price_updater = asyncio.create_task(self.keep_price_synced())
 
-        print("Waiting for 4")
-        await self.wait_for(4)
-        print("Got 4!")
+        print("price 1: {}".format(self.price))
 
-        print("Waiting for 3")
-        await self.wait_for(3)
-        print("Got 3!")
+        await asyncio.sleep(1)
 
-        print("all done!")
+        print("price 2: {}".format(self.price))
 
+        await asyncio.sleep(1)
+
+        print("price 3: {}".format(self.price))
+
+        print("Waiting for 10")
+        await self.wait_for(10)
+        print("GOT 10 ##################")
 
 @task.react
 def twisted_main(reactor):
