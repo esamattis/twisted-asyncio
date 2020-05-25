@@ -29,13 +29,14 @@ class RandomMessageSocket():
         callback(random_message)
 
         # Recursively loop random message sending
-        reactor.callLater(0.1, self.loop, callback)
+        reactor.callLater(1, self.loop, callback)
 
 
 class Handler():
     def __init__(self):
         self.future = None
         self.price = 0
+        self.message_buffer = []
 
     def process_message(self, message):
         print(">>> Just logging messages message: {}".format(message))
@@ -45,11 +46,22 @@ class Handler():
             self.future.set_result(message)
             # And clear it once it's resolved
             self.future = None
+        else:
+            # Write message to buffer there's no read_message() future waiting
+            # for a message
+            self.message_buffer.append(message)
 
     # Reads the next message from the stream
     async def read_message(self):
+        # Get the message immediately from the buffere if it is not empty
+        if len(self.message_buffer) > 0:
+            message = self.message_buffer.pop(0)
+            return message
+
+        # Otherwise create a future that waits for a message appear in "future"
         loop = asyncio.get_running_loop()
         self.future = loop.create_future()
+
         return await self.future
 
     # Waits for a spesific message and ignores others
