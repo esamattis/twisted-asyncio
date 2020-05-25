@@ -15,30 +15,21 @@ import random
 # Simulates binance socket manager.
 class RandomMessageSocket():
 
+    def __init__(self, messages):
+        self.messages = messages
+
     # Start calling callback with random messages
     def start_random_message_socket(self, callback):
         reactor.callLater(0.1, self.loop, callback)
 
     def loop(self, callback):
-        messages = list(range(1, 20)) # number from 1-20
-        random.shuffle(messages)
-        random_message = messages[0]
+        random.shuffle(self.messages)
+        random_message = self.messages[0]
 
         callback(random_message)
 
         # Recursively loop random message sending
         reactor.callLater(0.1, self.loop, callback)
-
-
-
-async def get_price():
-    pass
-
-
-
-
-
-
 
 
 class Handler():
@@ -96,8 +87,11 @@ class Handler():
 def twisted_main(reactor):
     handler = Handler()
 
-    rm = RandomMessageSocket()
-    rm.start_random_message_socket(handler.process_message)
+    random_chars = RandomMessageSocket(list('abcdefghijklmnopqrstuvwxyz'))
+    random_numbers = RandomMessageSocket(list(range(0, 20)))
+
+    random_chars.start_random_message_socket(handler.process_message)
+    random_numbers.start_random_message_socket(handler.process_message)
 
     # Call the python asyncio future using the twisted reactor
     return Deferred.fromFuture(asyncio.ensure_future(handler.main()))
